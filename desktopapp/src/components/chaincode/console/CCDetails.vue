@@ -8,6 +8,7 @@
           icon="pi pi-arrow-circle-up"
           label="Upgrade CC"
           @click.stop="upgradeCCdisplay = true"
+            :disabled = "!this.$store.state.docker.isOnline"
         ></Button>
       </div>
     </div>
@@ -80,7 +81,7 @@
       </div>
       <Dialog modal :dismissableMask="true" :closable="false" v-bind:visible="upgradeCCdisplay">
         <template #header>
-          <span>Upgrade selected ChainCode</span>
+          <span>Upgrade ChainCode</span>
           <Button
             @click="upgradeCCdisplay = false"
             icon="pi pi-times"
@@ -160,4 +161,5 @@ export default class CCDetails extends CCDetailsProps {
 
 <style lang="scss">
 @import "@/assets/style/_variables.scss";
+
 </style>

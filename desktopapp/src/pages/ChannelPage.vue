@@ -13,17 +13,18 @@
         </div>
 
         <Button
-          class="p-ml-auto p-button-sm p-button-primary"
+          class="p-ml-auto p-button-sm p-button-primary p-button-outlined"
           icon="pi pi-plus"
           label="Create new channel"
           @click.stop="display = true"
+          :disabled="!this.$store.state.docker.isOnline"
         ></Button>
       </div>
     </div>
     <transition name="channel-smooth">
       <div v-show="showSection">
         <div class="channel-list-wrapper p-grid p-jc-center p-my-4">
-          <div v-if="channels">
+          <div>
             <DataTable :value="channels" class="channel-list">
               <Column field="name" header="Name"></Column>
               <Column header="Date create">
@@ -38,9 +39,9 @@
               </Column>
             </DataTable>
           </div>
-          <div v-else class="channel-list-empty p-text-center">
+          <!-- <div v-else class="channel-list-empty p-text-center">
             <i class="fas fa-exclamation-circle"></i> no channel
-          </div>
+          </div> -->
         </div>
       </div>
     </transition>
@@ -63,6 +64,7 @@
             class="p-button-sm p-button-secondary p-mx-3"
             label="query config"
             @click="channelQuery()"
+            :disabled="!this.$store.state.docker.isOnline"
           />
 
           <Button
@@ -70,6 +72,7 @@
             class="p-button-sm p-button-secondary"
             label="update config"
             @click="channelUpdate()"
+            :disabled="!this.$store.state.docker.isOnline"
           />
         </div>
       </div>
@@ -83,28 +86,35 @@
 
     <div>
       <Dialog
-        header="Create network"
+        header="Create new channel"
         v-bind:visible="display"
         :closable="false"
         modal
-        :style="{ width: '30vw' }"
+        :style="{ width: '300px' }"
         :contentStyle="{ overflow: 'visible' }"
       >
-        <div class="p-grid p-jc-center p-p-3">
-          <span class="p-float-label">
-            <InputText id="channelName" v-model="channelName" />
-            <label for="channelName">channelName</label>
-          </span>
+        <div class="p-field p-grid p-fluid  p-jc-center">
+          <div class="p-col-12 p-px-5">
+            <small>Channel name</small>
+            <br />
+            <InputText
+              id="channelName"
+              v-model="channelName"
+              :class="{
+                'p-invalid': invalidChannel,
+              }"
+            />
+            <br />
+            <small class="p-error" v-if="invalidChannel">{{ errorChannel }}</small>
+          </div>
         </div>
-
         <div class="p-grid p-jc-center p-mb-2">
           <small class="text-error">*this operation cannot be undone</small>
         </div>
-
         <div class="p-d-flex p-jc-end p-mt-1">
-          <Button class="p-button-primary p-m-2" label="create" @click="checkValid()" />
+          <Button class="p-button-sm p-button-danger p-m-2 p-button-outlined" label="close" @click="display = false" />
 
-          <Button class="p-button-danger p-ml-auto p-m-2 p-button-outlined" label="close" @click="display = false" />
+          <Button class="p-button-sm p-button-primary p-m-2" label="create" @click="checkValid()" />
         </div>
       </Dialog>
     </div>
@@ -183,28 +193,36 @@ export default class ChannelPage extends Vue {
       falsy = true;
     }
 
-    channels.forEach((element: any) => {
-      if (element.name == this.channelName) {
-        duplicate = true;
-      }
-    });
+    if (!channels === undefined) {
+      channels.forEach((element: any) => {
+        if (element.name == this.channelName) {
+          duplicate = true;
+          this.errorChannel = "duplicate channel name.";
+          this.invalidChannel = true;
+        }
+      });
+    }
 
     if (!falsy && !duplicate) {
-      this.created();
+      this.create();
     }
   }
 
   async create() {
+    this.$store.commit("setProcessContext", "create channel");
     this.displaylog = true;
     let args: string[] = ["create"];
     args.push("-c", this.channelName);
-    await OSProcess.run_new(args);
-    await OSProcess.run_new(["join", "-c", this.channelName]);
-    await OSProcess.run_new(["channelquery", "-c", this.channelName]);
+    await OSProcess.run(args);
+    await OSProcess.run(["join", "-c", this.channelName]);
+    await OSProcess.run(["channelquery", "-c", this.channelName]);
 
     if (this.join) {
-      await OSProcess.run_new(["join", "-c", this.channelName]);
+      await OSProcess.run(["join", "-c", this.channelName]);
       this.join = false;
+      this.$store.commit("setProcessStatus", true);
+    } else {
+      this.$store.commit("setProcessStatus", true);
     }
     NetworkConfig.pushValueToArray("channel", {
       name: this.channelName,
@@ -228,19 +246,22 @@ export default class ChannelPage extends Vue {
   }
 
   async channelQuery() {
+    this.$store.commit("setProcessContext", "query channel config");
     this.displaylog = true;
     let args: string[] = ["channelquery"];
     args.push("-c");
     args.push(this.channelSelected);
-    await OSProcess.run_new(args);
+    await OSProcess.run(args);
+    this.$store.commit("setProcessStatus", true);
   }
 
   async channelUpdate() {
+    this.$store.commit("setProcessContext", "update channel config");
     this.displaylog = true;
     let args: string[] = ["channelsign,channelupdate"];
     args.push("-c");
     args.push(this.channelSelected);
-    await OSProcess.run_new(args);
+    await OSProcess.run(args);
     this.channelQuery();
   }
 }

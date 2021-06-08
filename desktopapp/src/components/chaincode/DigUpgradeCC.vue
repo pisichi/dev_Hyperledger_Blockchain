@@ -63,18 +63,18 @@
     </div>
     <br />
     <br />
-    <div class="p-grid">
+    <div class="p-grid p-jc-end">
       <Button
         label="Cancle"
         icon="pi pi-times"
         @click="close()"
-        class="p-button-outlined p-button-danger"
+        class="p-button-outlined p-button-danger p-mx-3"
       />
       <Button
         label="Upgrade"
         icon="pi pi-arrow-circle-up"
         @click="upGradeCC()"
-        class="p-button-outlined p-button-primary p-ml-auto p-px-3"
+        class="p-button-outlined p-button-primary p-px-3"
       />
     </div>
   </div>
@@ -134,6 +134,7 @@ export default class DigUpgradeCC extends DigUpGradeCCProps {
     }
   }
   async upGradeCC() {
+    this.$store.commit("setProcessContext", "upgrade Chaincode");
     this.$emit("openLog", true);
     this._selectedCC.directory = this.path;
     this._selectedCC.useInit = this.useInit;
@@ -144,7 +145,10 @@ export default class DigUpgradeCC extends DigUpGradeCCProps {
     }
     await ChainCodeProcess.updateCCtoFabric(this._selectedCC, this.selectedOrg);
     this.$emit("hookccList");
+    this.$store.commit("setProcessStatus", true);
+    this.close()
     //  this.hookCClist();
+    
   }
 }
 </script>

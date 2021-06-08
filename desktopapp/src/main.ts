@@ -84,6 +84,7 @@ import DefaultLayout from "./layouts/DefaultLayout.vue";
 
 import Splitter from 'primevue/splitter';
 import SplitterPanel from 'primevue/splitterpanel';
+import BlockUI from 'primevue/blockui';
 // import "primevue/resources/themes/bootstrap4-light-blue/theme.css";
 import "primevue/resources/themes/mdc-dark-indigo/theme.css";
 import "primevue/resources/primevue.min.css";
@@ -110,6 +111,7 @@ Vue.config.productionTip = false;
 Vue.component("default-layout", DefaultLayout);
 Vue.component("clean-layout", CleanLayout);
 
+Vue.component("BlockUI", BlockUI);
 Vue.component("Accordion", Accordion);
 Vue.component("AccordionTab", AccordionTab);
 Vue.component("AutoComplete", AutoComplete);
@@ -182,9 +184,9 @@ Vue.component("Tree", Tree);
 Vue.component("TriStateCheckbox", TriStateCheckbox);
 
 
-Vue.component("Splitter", Splitter );
-Vue.component("SplitterPanel", SplitterPanel );
-
+Vue.component("Splitter", Splitter);
+Vue.component("SplitterPanel", SplitterPanel);
+// process.noAsar = true;
 const app = new Vue({
   data() {
     return { loading: false };
@@ -193,13 +195,20 @@ const app = new Vue({
   store,
   render: (h) => h(App),
 }).$mount("#app");
-
 router.beforeEach((to, from, next) => {
+  // console.log(process)
+  
   app.loading = true;
   next();
 });
 router.afterEach(() => {
   app.loading = false;
+ 
   // setTimeout(() => (app.loading = false), 15000); // timeout for demo purposes
 });
+
 store.commit("setPlatform", process.platform);
+// try {
+//   require("fabric-ca-client");
+// }
+// catch (e) { console.log(e) }

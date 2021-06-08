@@ -1,57 +1,93 @@
 <template>
   <div>
     <div class="identity-header p-grid p-ai-center vertical-container">
-      Indentity Manager
+      Identity Manager 
     </div>
 
-    <div class="p-grid p-nogutter  identity-wrapper p-jc-center">
-      <div class="p-col-10">
-        <div class="p-grid p-fluid p-nogutter">
-          <div class="p-col-3">
-            <small>Selected Peer Organization</small>
-            <Dropdown class="p-mt-1" :options="orgList" v-model="selectedOrg" @change="setUserDataList($event.value)" />
+    <div class="p-grid p-nogutter identity-wrapper p-jc-center">
+      <div class="p-col-12">
+        <div
+          class="p-d-flex p-jc-between p-ai-center identity-table-header p-py-2"
+        >
+          <div class="p-col">
+            <div class="identity-table-header-text">
+              Identity List
+              <Dropdown
+               class="indentity-dropdown p-ml-3"
+                v-model="showOrg"
+                :options="orgList"
+                @change="setUserDataList($event.value)"
+                
+              />
+            </div>
           </div>
-          <div class="p-col"></div>
-          <div class="p-co3">
+          <div class="p-col p-text-right">
             <Button
               label="ADD NEW USER"
               icon="pi pi-user-plus"
-              class="p-mt-4 p-ml-auto p-button-outlined p-button-sm p-button-warning"
+              class="p-ml-auto p-button-outlined p-button-sm p-button-warning p-mr-3"
               @click="(newUserDisplay = true), resetInput()"
+                :disabled = "!this.$store.state.docker.isOnline"
             />
           </div>
         </div>
-        <Panel class="p-mt-2">
+        <Panel>
           <template #header>
-            <h5 class="text-primary p-p-3">
-              Identity List
-            </h5>
+            <div></div>
           </template>
-          <div v-if="userDataList.length === 0" class="table-indentity-blocked p-d-flex p-jc-center p-ai-center">
-            <div class="p-col p-text-center"><i class="fas fa-unlink"></i> no user indentity</div>
+          <div
+            v-if="userDataList.length === 0"
+            class="table-indentity-blocked p-d-flex p-jc-center p-ai-center"
+          >
+            <div class="p-col p-text-center">
+              <i class="fas fa-unlink"></i> no user indentity
+            </div>
           </div>
-
-          <DataTable :value="userDataList" class="table-indentity" v-else>
+          <DataTable :value="userDataList" class="table-indentity" :scrollable="true" scrollHeight="flex"  v-else>
             <Column field="name" header="Name"></Column>
             <Column field="role" header="Role"></Column>
           </DataTable>
         </Panel>
-        <Dialog modal :dismissableMask="true" :closable="false" v-bind:visible="newUserDisplay">
+        <Dialog
+          modal
+          :dismissableMask="true"
+          :closable="false"
+          v-bind:visible="newUserDisplay"
+          :style="{ width: '400px', padding: '0px' }"
+          :contentStyle="{ overflow: 'visible' }"
+        >
           <template #header>
-            <span
+            <span>create identity</span>
+            <!-- <span
               >Add newuser to <b>{{ selectedOrg }}</b></span
             >
             <Button
               @click="newUserDisplay = false"
               icon="pi pi-times"
               class="p-button-text p-ml-auto p-button-rounded"
-            />
+            /> -->
           </template>
           <div class="p-fluid p-grid p-formgrid">
             <div class="p-field p-col-12">
+              <label>Peer Organization</label>
+
+              <Dropdown
+                class="p-mt-1"
+                :options="orgList"
+                v-model="selectedOrg"
+              />
+            </div>
+
+            <div class="p-field p-col-12">
               <label>Username</label>
-              <InputText :class="{ 'p-invalid': inputGroup.inputName }" placeholder="Username" v-model="userName" />
-              <small v-if="inputGroup.inputName" class="p-error">Required input UserName </small>
+              <InputText
+                :class="{ 'p-invalid': inputGroup.inputName }"
+                placeholder="Username"
+                v-model="userName"
+              />
+              <small v-if="inputGroup.inputName" class="p-error"
+                >Required input UserName
+              </small>
             </div>
             <div class="p-field p-col-12">
               <label>Password</label>
@@ -61,26 +97,28 @@
                 placeholder="Password"
                 :toggleMask="true"
               />
-              <small v-if="inputGroup.inputPW" class="p-error">Required input Password </small>
+              <small v-if="inputGroup.inputPW" class="p-error"
+                >Required input Password
+              </small>
             </div>
 
             <div class="p-field p-col-12">
-              <label>Role Identified</label>
+              <label>Role</label>
               <Dropdown v-model="userRole" :options="roleType" />
             </div>
           </div>
-          <div class="p-grid p-mx-1 p-mt-1">
+          <div class="p-grid p-mx-1 p-mt-1 p-jc-end">
             <Button
               label="Close"
               icon="pi pi-times"
               @click="newUserDisplay = false"
-              class="p-button-outlined p-button-danger"
+              class="p-button-outlined p-button-danger p-mx-3"
             />
             <Button
               label="Enroll"
               icon="pi pi-user-plus"
-              class="p-button-outlined p-button-primary p-ml-auto p-px-3"
-              @click="enroll(), checkInputGroup()"
+              class="p-button-outlined p-button-primary p-px-3"
+              @click="enroll(), checkInputGroup(), (newUserDisplay = false)"
             />
           </div>
         </Dialog>
@@ -109,6 +147,7 @@ export default class IdentityManger extends IdentityMangerProps {
   userPassword: string = "";
   userRole: string = "";
   selectedOrg = "";
+  showOrg = "";
   inputGroup = {
     inputName: false,
     inputPW: false,
@@ -124,6 +163,7 @@ export default class IdentityManger extends IdentityMangerProps {
       this.orgList = _orgList;
       // this.orgUserList = _orgUserList
       this.selectedOrg = this.orgList[0];
+      this.showOrg = this.orgList[0];
       this.setUserDataList(this.orgList[0]);
     }
     //this.selectedChannel = this.channelList[0];
@@ -166,9 +206,15 @@ export default class IdentityManger extends IdentityMangerProps {
       this.inputGroup.inputPW = false;
     }
   }
+  // TODO: add pop up error handle
   async enroll() {
     if (!(this.userName == "" || this.userPassword == "")) {
-      await FabricSDK.EnrollIdentity(this.selectedOrg, this.userName, this.userPassword, this.userRole);
+      await FabricSDK.EnrollIdentity(
+        this.selectedOrg,
+        this.userName,
+        this.userPassword,
+        this.userRole
+      );
       this.setUserDataList(this.selectedOrg);
     }
   }
@@ -178,11 +224,11 @@ export default class IdentityManger extends IdentityMangerProps {
 <style lang="scss">
 @import "@/assets/style/_variables.scss";
 .table-indentity {
-  height: calc(70vh - 120px);
+  height: calc((100vh - 40px) - 155.78px - 30px);
 }
 
 .table-indentity-blocked {
-  height: calc(70vh - 120px);
+  height: calc((100vh - 40px) - 155.78px - 30px);
 }
 
 .identity-header {
@@ -194,14 +240,20 @@ export default class IdentityManger extends IdentityMangerProps {
   font-weight: bold;
   height: 90px;
 }
-
-.identity-wrapper {
-  padding: 20px;
-  align-items: center;
-  color: white;
-  font-size: 20px;
+.identity-table-header {
+  width: 100%;
+  background-color: rgb(73, 73, 73);
+}
+.identity-table-header-text {
+  color: $primaryColor;
+  font-size: 18px;
   font-weight: bold;
-  height: calc(100vh - 122px);
-  overflow: scroll;
+  padding-left: 15px;
+}
+.indentity-dropdown .p-dropdown-label {
+  font-size: 15px;
+  padding: 5px 10px 5px 10px;
+  color: rgb(253, 253, 180);
+  font-weight: bold;
 }
 </style>

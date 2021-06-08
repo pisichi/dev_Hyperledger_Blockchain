@@ -83,7 +83,7 @@ class ChainCodeProcess {
       args.push("true")
     }
     args = ArgsWrapper.basicCCWrapper(args, ccObj, org);
-    return OSProcess.run_new(args).then((res: any) => {
+    return OSProcess.run(args).then((res: any) => {
       if (res.status == true) {
         ccObj.state = CCstate.installCC;
         return ccObj;
@@ -100,7 +100,7 @@ class ChainCodeProcess {
     //   let projectPath = getProjectPath()
     args = ArgsWrapper.basicCCWrapper(args, ccObj, org);
 
-    return OSProcess.run_new(args).then((res: any) => {
+    return OSProcess.run(args).then((res: any) => {
       if (res.status == true) {
         ccObj.state = CCstate.approveCC;
         this.updateNetworkConfig(ccObj);
@@ -117,7 +117,7 @@ class ChainCodeProcess {
     args.push("commit");
     args = ArgsWrapper.basicCCWrapper(args, ccObj, org);
     if (ccObj.state == CCstate.approveCC) {
-      return OSProcess.run_new(args).then((res: any) => {
+      return OSProcess.run(args).then((res: any) => {
         if (res.status == true) {
           ccObj.state = CCstate.commitCC;
           this.updateNetworkConfig(ccObj);
@@ -174,7 +174,7 @@ class ChainCodeProcess {
     ccObj = await this.setupFolder(ccObj);
   }
     if (ccObj.state == CCstate.setupDir) {
-      ccObj = await this.installCC(ccObj, org, useInti);
+      ccObj =await  this.installCC(ccObj, org, useInti);
     }
     if (ccObj.state == CCstate.installCC) {
       ccObj = await this.approve(ccObj, org);
@@ -195,10 +195,9 @@ class ChainCodeProcess {
   async updateCCtoFabric(ccObj: any, org: string) {
     this.setDate(ccObj);
     this.updateVersion(ccObj);
-    // console.log(ccObj)
     ccObj = await this.upDateFolder(ccObj);
     ccObj = await this.installCC(ccObj, org, ccObj.useInit);
-    ccObj = await this.approve(ccObj, org);
+    ccObj =  await this.approve(ccObj, org);
     ccObj = await this.commit(ccObj, org);
     if (ccObj.useInit == true) {
       ccObj = await this.initCC(ccObj, ccObj.initArgs, org);
@@ -222,7 +221,7 @@ class ChainCodeProcess {
       )
     );
     //console.log(args)
-    return OSProcess.run_new(args).then((res: any) => {
+    return OSProcess.run(args).then((res: any) => {
       if (res.status == true) {
         ccObj.state = CCstate.initCC;
         this.updateNetworkConfig(ccObj);
@@ -241,6 +240,28 @@ class ChainCodeProcess {
     args = ArgsWrapper.basicCCWrapper(args, ccObj, org).concat(
       ArgsWrapper.argsCCWrapper(ccArgs)
     );
+    //if (ccObj.state == CCstate.initCC) {
+    return OSProcess.run_CC_output(
+      args,
+      command,
+      ccObj.version
+    ).then((res: any[]) => {
+      return this.getCallBackData(res);
+    });
+  }
+  
+  callCC_command_string(ccObj: any, ccArgs: any, command: string, org: string) {
+    let args: any = [];
+    args.push(command);
+    args = ArgsWrapper.basicCCWrapper(args, ccObj, org)
+    //for window case
+    const double_quote = /"/g;
+    ccArgs=ccArgs.replace(double_quote,'\\"')
+    const single_quote = /'/g;
+    ccArgs=ccArgs.replace(single_quote,'\\\'')
+    args.push("-p")
+    args.push(`"${ccArgs}"`)
+
     //if (ccObj.state == CCstate.initCC) {
     return OSProcess.run_CC_output(
       args,

@@ -30,12 +30,12 @@
               </div>
             </div>
             <div class="p-grid p-jc-center">
-              <div class="p-col-8">
+              <div class="p-md-8 p-lg-5">
                 <ProgressBar
                   :value="
                     (this.$store.getters['docker/getActiveContainerCount'] /
                       this.$store.getters['docker/getContainerCount']) *
-                    100
+                      100
                   "
                 >
                   Percent Complete:
@@ -49,13 +49,37 @@
     </div>
 
     <div class="container-content">
-      <ContainerTable
-        v-bind:container="container"
-        v-bind:org="org"
-        :key="componentKey"
-      />
+      <ContainerTable v-bind:container="container" v-bind:org="org" :key="componentKey" />
     </div>
-    <div class="p-grid p-mt-2 p-mr-1">
+
+    <div class="container-footer">
+      <div class="p-grid p-jc-end p-mr-5">
+        <div class="p-md-4 p-lg-3">
+          <div class="p-d-flex">
+            Export
+          </div>
+          <div class="p-d-flex  p-mt-1 p-fluid">
+            <Button
+              icon="fas fa-id-card"
+              label="connection profile"
+              class="p-button-outlined p-button-primary p-button-sm"
+              @click="exportAppDisplay = true"
+                :disabled = "!this.$store.state.docker.isOnline"
+            />
+          </div>
+
+          <div class="p-d-flex p-mt-1 p-fluid p-nogutter">
+            <ExportConfig />
+          </div>
+
+          <!-- <div class="p-d-flex p-mt-1  p-fluid p-nogutter">
+            <ExportCompose />
+          </div> -->
+        </div>
+      </div>
+    </div>
+
+    <!-- <div class="p-grid p-mt-2 p-mr-1">
        <div class="p-col p-text-right">
       <Button
         label="ExportConnectionProfile"
@@ -63,18 +87,20 @@
         @click="exportAppDisplay = true"
       />
        </div>
-    </div>
+    </div> -->
 
     <Dialog
       modal
       :dismissableMask="true"
       :closable="false"
       v-bind:visible="exportAppDisplay"
+      :style="{ width: '300px', padding: '0px' }"
+      :contentStyle="{ overflow: 'visible' }"
     >
       <template #header>
         <span>ExportConnectionProfile</span>
       </template>
-      <ExportConnectionProfile  @closeExportCon="closeExportCon"/>
+      <ExportConnectionProfile @closeExportCon="closeExportCon" />
     </Dialog>
   </div>
 </template>
@@ -83,10 +109,15 @@
 import Vue from "vue";
 import Component from "vue-class-component";
 import ContainerTable from "./components/container/ContainerTable.vue";
-import LogView from "./components/container/LogView.vue";
+import LogView from "./components/LogView.vue";
 import ExplorerButton from "./components/container/ExplorerButton.vue";
 import NetworkConfig from "./models/NetworkConfig";
 import ExportConnectionProfile from "@/components/export/ExportProfile.vue";
+import ExportConfig from "./components/export/ExportConfig.vue";
+import ExportCompose from "./components/export/ExportCompose.vue";
+import FileManager from "./module/FileManager";
+const fs = require("fs");
+const path = require("path");
 /* eslint-disable no-unused-vars */
 @Component({
   components: {
@@ -94,6 +125,8 @@ import ExportConnectionProfile from "@/components/export/ExportProfile.vue";
     LogView,
     ExplorerButton,
     ExportConnectionProfile,
+    ExportConfig,
+    ExportCompose,
   },
 })
 export default class Index extends Vue {
@@ -118,9 +151,9 @@ export default class Index extends Vue {
       orderer: boolean;
     };
   } = {};
-closeExportCon(){
+  closeExportCon() {
     this.exportAppDisplay = false;
-}
+  }
   created() {
     this.container = this.$store.state.docker.activeContainer;
     this.org = NetworkConfig.getOrgData();
@@ -136,9 +169,7 @@ closeExportCon(){
         // console.log("component update new" + newValue);
         this.container = newValue;
 
-        this.activeContainer = this.$store.getters[
-          "docker/getActiveContainerCount"
-        ];
+        this.activeContainer = this.$store.getters["docker/getActiveContainerCount"];
         // console.log(this.container);
         if (this.activeContainer == 0) {
           this.statusClass = "offline";
@@ -172,6 +203,20 @@ closeExportCon(){
     this.container = this.$store.state.docker.activeContainer;
     this.org = NetworkConfig.getOrgData();
     this.filter();
+
+     try {
+      let _genesis = path.join(this.$store.state.project.path, "genesis.block");
+      if (!fs.existsSync(_genesis)) {
+        console.log("copy!!!")
+        FileManager.copyFilesDir(
+          path.join(this.$store.state.project.path, "vars", "genesis.block"),
+          path.join(this.$store.state.project.path, "genesis.block")
+        );
+      }
+    } catch (err) {
+      console.error(err);
+    }
+
   }
 
   filter() {
@@ -182,7 +227,6 @@ closeExportCon(){
     });
   }
 }
-
 </script>
 
 <style lang="scss">
@@ -217,7 +261,7 @@ closeExportCon(){
 }
 
 .container-footer {
-  padding: 30px;
+  padding: 15px;
   height: 100%;
   font-size: 20px;
   font-weight: bold;
